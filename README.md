@@ -61,3 +61,50 @@ Your repository you hand off to me should have:
 - The requirements to complete this coding challenge are intentionally kept simple in order to make earnestly engaging with the task reasonable
 - If you have any extenuating circumstances (For example a computer that cannot run any of the stated software) that make completing this challenge impossible, or you have any questions (I will help you if needed) contact nkujava@wisc.edu
 - Good luck and don't feel intimidated, you can do it!
+
+---
+
+# My Submission (brocclee299)
+
+## What the program does
+
+`aggregator_node` (package `aggregator_pkg`, Python / rclpy) subscribes to two `std_msgs/Float64` topics, `/input_topic_a` and `/input_topic_b`. Each topic has its own callback (`callback_a`, `callback_b`) that stores the latest value. Once both inputs have arrived, the `aggregate()` function averages them and the node publishes the result on `/output_topic`.
+
+```
+/input_topic_a ─┐
+                ├─> aggregator_node ──> /output_topic   (average of a and b)
+/input_topic_b ─┘
+```
+
+## Build and run
+
+Run these from the repository root on the host (PowerShell).
+
+Build the image and start the container (the repo is mounted at `/repo`):
+
+    docker build -t wa-ros2 .
+    docker run -it --rm -v ${PWD}:/repo wa-ros2
+
+Inside the container, build and run the node:
+
+    cd /repo/ros2_ws
+    colcon build
+    source install/setup.bash
+    ros2 run aggregator_pkg aggregator_node
+
+## Inputs (`ros2 topic pub`)
+
+In separate terminals, attach to the same container with `docker exec -it <container_name> bash` (find the name with `docker ps`), run `source /repo/ros2_ws/install/setup.bash`, then:
+
+    ros2 topic pub /input_topic_a std_msgs/msg/Float64 "{data: 10.0}" -r 1
+    ros2 topic pub /input_topic_b std_msgs/msg/Float64 "{data: 20.0}" -r 1
+
+Watch the output (should print `data: 15.0`, the average of 10.0 and 20.0):
+
+    ros2 topic echo /output_topic
+
+## Environment proof
+
+`printenv ROS_DISTRO` prints `humble`, and `ros2 --help` and `ros2 topic list` run successfully inside the container:
+
+![ROS 2 working in the container](docs/env_screenshot.png)
